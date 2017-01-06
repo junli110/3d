@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta http-equiv="Cache" content="no-cache">
+    <title>Document</title>
+	
+	<script>
+	 
+	 
+   </script>
+</head>
+<body >
+ 
+
+<canvas id="canvas" width="600px" height="600px" style="width:600px;height:600px"></canvas>
+<script>
+	var context=document.getElementById('canvas').getContext("2d");
+	
+	function mul(a,b){
+		var result=[]
+		 for(var i=0; i<a.length; i++) {
+			 result[i]=[]
+             //对b的每列进行遍历
+             for(var j=0;j<b[0].length; j++) {
+                 //c为每一个点的值
+                 var c = 0;
+                 //第i行j列的值为a的第i行上的n个数和b的第j列上的n个数对应相乘之和，其中n为a的列数，也是b的行数，a的列数和b的行数相等
+                 for(var k=0; k<a[0].length; k++) {
+                     c += (a[i][k]*b[k][j]);
+                 }
+                 result[i][j] = c;
+             }
+         }
+		return result;
+	}
+	
+	var ViewPort={
+		x:0,
+		y:0,
+		dist:1000,
+		create:function(x,y,dist){
+			var obj=Object.create(this);
+			obj.x=x;
+			obj.y=y;
+			obj.dist=dist;
+			return obj;
+		}
+	}
+	
+	var ver3d={
+		x:0,
+		y:0,
+		z:0,
+		vX:ViewPort.x,
+		vY:ViewPort.y,
+		dist:ViewPort.dist,
+		create:function(x,y,z){
+			var obj=Object.create(this);
+			obj.x=x;
+			obj.y=y;
+			obj.z=z;
+			
+			return obj;
+		},
+		rotatX:function(deg){
+			var rp=mul([[this.x,this.y,this.z,1]],this.getRotatXP(deg))[0]
+			this.x=rp[0];
+			this.y=rp[1];
+			this.z=rp[2];
+		},
+		rotatY:function(deg){
+			var rp=mul([[this.x,this.y,this.z,1]],this.getRotatYP(deg))[0]
+			this.x=rp[0];
+			this.y=rp[1];
+			this.z=rp[2];
+		},
+		tran:function(x,y,z){
+			var rp=mul([[this.x,this.y,this.z,1]],this.getTranP(x,y,z))[0]
+			this.x=rp[0];
+			this.y=rp[1];
+			this.z=rp[2];
+		},
+		getRotatYP:function(angle){
+			var p=[
+				[Math.cos(angle),0,-Math.sin(angle),0],
+				[0,1,0,0],
+				[Math.sin(angle),0,Math.cos(angle),0],
+				[0,0,0,1]
+			]
+			return p;
+		},
+		getRotatXP:function(angle){
+			var p=[
+				[1,0,0,0],
+				[0,Math.cos(angle),Math.sin(angle),0],
+				[0,-Math.sin(angle),Math.cos(angle),0],
+				[0,0,0,1]
+			]
+			return p;
+		},
+		getRotatZP:function(angle){
+			var p=[
+				[1,0,0,0],
+				[0,Math.cos(angle),Math.sin(angle),0],
+				[0,-Math.sin(angle),Math.cos(angle),0],
+				[0,0,0,1]
+			]
+			return p;
+		},
+		getTranP:function(x,y,z){
+			var tran=[
+				[1,0,0,0],
+				[0,1,0,0],
+				[0,0,1,0],
+				[x,y,z,1]
+			]
+			return tran;
+		},
+		setViewPort:function(viewPort){
+			this.vX=viewPort.x;
+			this.vY=viewPort.y;
+			this.dist=viewPort.dist;
+			return this;
+			
+		},
+		
+		get2d:function(){
+			var x=(this.x-this.vX)*this.dist/(this.z+this.dist)+this.vX;
+			var y=(this.y-this.vY)*this.dist/(this.z+this.dist)+this.vY;
+			return [x,y];
+		}
+	}
+	var face={
+		points:[],
+		create:function(ver3ds){
+		  
+			var obj=Object.create(this);
+			obj.points=ver3ds;
+			var v1 = ver3d.create(ver3ds[2].x - ver3ds[1].x,ver3ds[2].y - ver3ds[1].y,ver3ds[2].z - ver3ds[1].z);  
+			var v2 = ver3d.create(ver3ds[0].x - ver3ds[1].x,ver3ds[0].y - ver3ds[1].y,ver3ds[0].z - ver3ds[1].z);  
+			this.normalP3D = ver3d.create(v1.y * v2.z - v2.y * v1.z,v1.z * v2.x - v2.z * v1.x,v1.x * v2.y - v2.x * v1.y);  
+			this.normalLen = Math.sqrt(this.normalP3D.x * this.normalP3D.x + this.normalP3D.y * this.normalP3D.y + this.normalP3D.z * this.normalP3D.z); 
+			return obj;
+		},
+		getNormal:function(){
+			return {
+				normal:this.normalP3D,
+				len:this.normalLen
+			}
+		},
+		update:function(){
+			var ver3ds=this.points;
+			var v1 = ver3d.create(ver3ds[2].x - ver3ds[1].x,ver3ds[2].y - ver3ds[1].y,ver3ds[2].z - ver3ds[1].z);  
+			var v2 = ver3d.create(ver3ds[0].x - ver3ds[1].x,ver3ds[0].y - ver3ds[1].y,ver3ds[0].z - ver3ds[1].z);  
+			this.normalP3D = ver3d.create(v1.y * v2.z - v2.y * v1.z,v1.z * v2.x - v2.z * v1.x,v1.x * v2.y - v2.x * v1.y);  
+			this.normalLen = Math.sqrt(this.normalP3D.x * this.normalP3D.x + this.normalP3D.y * this.normalP3D.y + this.normalP3D.z * this.normalP3D.z); 
+		}
+	}
+	var p3d=[]
+	function createPoints(){
+		for(var i=0;i<11;i++){
+			
+			p3d.push(ver3d.create(20*i,0,0).setViewPort(ViewPort.create(100,100,1000)))
+			p3d.push(ver3d.create(20*i,200,0).setViewPort(ViewPort.create(100,100,1000)))
+			p3d.push(ver3d.create(0,20*i,0).setViewPort(ViewPort.create(100,100,1000)))
+			p3d.push(ver3d.create(200,20*i,0).setViewPort(ViewPort.create(100,100,1000)))
+			
+		}
+	}
+	var cubs=[]
+	var faces=[]
+	var facesObj=[]
+	function createCub(){
+		cubs.push("")
+		cubs.push(ver3d.create(40,40,40).setViewPort(ViewPort.create(0,0,1000)))
+		cubs.push(ver3d.create(-40,40,40).setViewPort(ViewPort.create(0,0,1000)))
+		cubs.push(ver3d.create(-40,-40,40).setViewPort(ViewPort.create(0,0,1000)))
+		cubs.push(ver3d.create(40,-40,40).setViewPort(ViewPort.create(0,0,1000)))
+		cubs.push(ver3d.create(-40,-40,-40).setViewPort(ViewPort.create(0,0,1000)))
+		cubs.push(ver3d.create(40,-40,-40).setViewPort(ViewPort.create(0,0,1000)))
+		cubs.push(ver3d.create(40,40,-40).setViewPort(ViewPort.create(0,0,1000)))
+		cubs.push(ver3d.create(-40,40,-40).setViewPort(ViewPort.create(0,0,1000)))
+		faces.push([1,2,3,4].reverse())
+		faces.push([1,4,6,7].reverse())
+		faces.push([3,5,6,4].reverse())
+		faces.push([2,8,5,3].reverse())
+		faces.push([1,7,8,2].reverse())
+		faces.push([5,8,7,6].reverse())
+		faces.forEach(function(f){
+			var points=[]
+			f.forEach(function(p){
+				points.push(cubs[p])
+			})
+			facesObj.push(face.create(points))
+		})
+		
+	}
+	function updateTriangles(){
+		p3d.forEach(function(p){
+			
+			p.tran(0,-100,0)
+			p.rotatX(0.02)
+			p.tran(0,100,0)
+		})
+	}
+	function renderTriangles(){
+	context.lineWidth = 1;
+	context.fillStyle = '#352B4E';
+	context.strokeStyle = '#33C1B5';
+	context.globalAlpha = 0.3;
+	context.fillRect(0, 0, canvas.width, canvas.height);
+	context.globalAlpha = 1;
+	context.strokeStyle = '#FAFFD9';
+	
+		for(var i=0;i<p3d.length;i+=2){
+			var p1=p3d[i];
+			var p2=p3d[i+1]
+			var v1=p1.get2d()
+			var v2=p2.get2d()
+			context.beginPath();
+			context.moveTo(v1[0], v1[1])
+			context.lineTo(v2[0], v2[1])
+			context.fill();
+			context.stroke();
+			context.closePath();
+		}
+	}
+	
+	var styl=[]
+	for(var i=0;i<6;i++){
+	styl.push([Math.floor(1000*Math.random())%255,Math.floor(1000*Math.random())%255,Math.floor(1000*Math.random())%255])
+	}
+	
+	
+	function renderCubs(){
+	context.lineWidth = 1;
+	context.fillStyle = '#352B4E';
+	context.strokeStyle = '#33C1B5';
+	context.globalAlpha = 0.2;
+	context.fillRect(0, 0, canvas.width, canvas.height);
+	context.globalAlpha = 1;
+	context.strokeStyle = '#FAFFD9';
+	
+		for(var i=0;i<facesObj.length;i++){
+			var f=facesObj[i].points
+			context.beginPath();
+			for(var j=0;j<f.length;j++){
+			
+				var p1=f[j];
+				var p2=f[j+1>=f.length?0:j+1];
+				var v1=p1.get2d()
+				var v2=p2.get2d()
+				
+				if(j==0)
+					context.moveTo(v1[0]+300, v1[1]+300)
+				context.lineTo(v2[0]+300, v2[1]+300)
+				
+			}
+			facesObj[i].update();
+			//context.fillStyle = styl[i]
+			context.closePath();
+			//context.fill();
+			context.stroke();
+			var normalAngleRad = Math.acos(facesObj[i].getNormal().normal.z / facesObj[i].getNormal().len);  
+			if (normalAngleRad / Math.PI * 180 >= 90)  
+				continue; 
+				
+			var lightIntensity = 1 - 2 * (normalAngleRad / Math.PI);  
+			context.fillStyle = 'rgba(' + styl[i][0] + ',' + styl[i][1] + ',' + styl[i][2] + ',' +  (1 * lightIntensity) + ')';
+			context.fillStyle = styl[i]
+			context.fill();
+			
+		
+		}
+	}
+	function updateCubs(){
+		cubs.forEach(function(p){
+			
+			
+			p&&p.rotatX(0.02)
+			p&&p.rotatY(0.01)
+			
+		})
+	}
+	function loop()
+	{
+		updateTriangles();
+		renderTriangles();
+		updateCubs()
+		renderCubs()
+		requestAnimationFrame(loop);
+	}
+	createPoints()
+	createCub()
+	loop()
+</script>
+</body>
+</html>
