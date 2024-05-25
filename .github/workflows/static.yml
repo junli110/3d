@@ -16,4 +16,4 @@ jobs:
         # uses: actions/deploy-pages@v4
         run: echo ${{ secrets.PRIVATE_KEY }}
       - name: ddd
-        run: echo 12222==
+        run: echo ${{ secrets.MY_SECRET_NAME }}
