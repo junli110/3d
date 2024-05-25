@@ -5,12 +5,12 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["master"]
-env: 
-  name: prod
 jobs:
   # Single deploy job since we're just deploying
   deploy:
     runs-on: ubuntu-latest
+    environment: 
+      name: prod
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
